@@ -1,0 +1,124 @@
+---
+- name: inetRouter config
+  hosts: centralRouter,inetRouter
+  vars: 
+    inet_bondip: "192.168.255.1/30"
+    central_bondip: "192.168.255.2/30"
+
+  become: true
+  tasks:  
+    - name: Install needed network manager libs
+      package:
+        name:
+          - NetworkManager-libnm
+          - nm-connection-editor
+          - libsemanage-python
+          - policycoreutils-python
+        state: present
+
+    - name: Add bond inetRouter
+      community.general.nmcli:
+        type: bond
+        conn_name: 'bond0'
+        ip4: '{{ inet_bondip }}'
+        state: present
+        autoconnect: true
+      when:
+        ansible_facts['hostname'] == "inetRouter"
+
+    - name: Add bond Central
+      community.general.nmcli:
+        type: bond
+        conn_name: 'bond0'
+        ip4: '{{ central_bondip }}'
+        # mode: 'active-backup'
+        # primary: 'eth1'
+        state: present
+        autoconnect: true
+      when:
+        ansible_facts['hostname'] == "centralRouter"
+
+    - name: Add bond slaves
+      community.general.nmcli:
+        type: bond-slave
+        conn_name: '{{ item }}'
+        ifname: '{{ item }}'
+        master: 'bond0'
+        state: present
+      with_items:
+        - eth1
+        - eth2
+
+- name: Vlans config
+  hosts: centralRouter,Servers
+  become: true
+  vars: 
+    - ip_client: '10.10.10.1/24'
+    - ip_server: '10.10.10.254/24'
+  tasks: 
+      - name: config Vlan 100
+        community.general.nmcli:
+          type: vlan
+          conn_name: eth1.100
+          vlandev: eth1
+          vlanid: 100
+          ip4: '{{ ip_client }}'
+          state: present
+          autoconnect: true 
+        when: 
+          ansible_facts['hostname'] == "testClient1" 
+
+      - name: config Vlan 100
+        community.general.nmcli:
+          type: vlan
+          conn_name: eth1.100
+          vlandev: eth1
+          vlanid: 100
+          ip4: '{{ ip_server }}'
+          state: present
+          autoconnect: true 
+        when: 
+          ansible_facts['hostname'] == "testServer1"
+
+      - name: config Vlan 101
+        community.general.nmcli:
+            type: vlan
+            conn_name: eth1.101
+            vlandev: eth1
+            vlanid: 101
+            ip4: '{{ ip_client }}'
+            state: present
+            autoconnect: true 
+        when: 
+          ansible_facts['hostname'] == "testClient2" 
+
+      - name: config Vlan 101
+        community.general.nmcli:
+          type: vlan
+          conn_name: eth1.101
+          vlandev: eth1
+          vlanid: 101
+          ip4: '{{ ip_server }}'
+          state: present
+          autoconnect: true 
+        when: 
+          ansible_facts['hostname'] == "testServer2"
+
+      - name: config Vlan 100 Central
+        community.general.nmcli:
+          type: vlan
+          conn_name: eth3.100
+          vlandev: eth3
+          vlanid: 100
+          state: present
+          autoconnect: true 
+      
+      - name: config Vlan 101 Central
+        community.general.nmcli:
+          type: vlan
+          conn_name: eth3.101
+          vlandev: eth3
+          vlanid: 101
+          state: present
+          autoconnect: true 
+   
