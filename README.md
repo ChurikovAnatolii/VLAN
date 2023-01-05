@@ -95,9 +95,57 @@ rtt min/avg/max/mdev = 0.735/14140.117/45250.748/15208.811 ms, pipe 46
 
 ```
 ---
-**Вывод: При отключении интерфейса eth1 на роутере inetRouter пинги перестали идти по bond-иньерфейсу до тех пор пока eth1 не был поднят. Задание выполнено.**
+**Вывод: При отключении интерфейса eth1 на роутере inetRouter пинги перестали идти по bond-интерфейсу, до тех пор пока eth1 не был поднят. Задание выполнено.**
 <br>
 
 ## Vlan для testClient и testServer
+<br>
 
+
+***- Для вполнения задания по вланам в вагрант файл были добавлены хосты testClient1, testClien2, testServer1, testServer2. Для создания vlan был использован модуль nmcli в ansible.***
+
+***- После запуска стенда зайдем на хосты и проверим, xnj vlan  созданы и в апе. Пропингуем клиентов с серверов и посмотрим в tcpdump, что пакеты приходят с тэгом vlan 100 и 101.***
+
+***- Cначала для связки testClient1, testServer1***
+```console
+
+4: eth1.100@eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
+    link/ether 08:00:27:42:46:f4 brd ff:ff:ff:ff:ff:ff
+    inet 10.10.10.1/24 brd 10.10.10.255 scope global noprefixroute eth1.100
+       valid_lft forever preferred_lft forever
+    inet6 fe80::3ee2:2d41:ba81:4c8c/64 scope link noprefixroute 
+       valid_lft forever preferred_lft forever
+[vagrant@testClient1 ~]$ 
+
+[vagrant@testClient1 ~]$ sudo tcpdump -nvvv -e -i eth1 icmp -c 10
+tcpdump: listening on eth1, link-type EN10MB (Ethernet), capture size 262144 bytes
+17:26:48.416679 08:00:27:20:03:f0 > 08:00:27:42:46:f4, ethertype 802.1Q (0x8100), length 102: vlan 100, p 0, ethertype IPv4, (tos 0x0, ttl 64, id 50800, offset 0, flags [DF], proto ICMP (1), length 84)
+    10.10.10.254 > 10.10.10.1: ICMP echo request, id 26909, seq 14, length 64
+17:26:48.416746 08:00:27:42:46:f4 > 08:00:27:20:03:f0, ethertype 802.1Q (0x8100), length 102: vlan 100, p 0, ethertype IPv4, (tos 0x0, ttl 64, id 28773, offset 0, flags [none], proto ICMP (1), length 84)
+    10.10.10.1 > 10.10.10.254: ICMP echo reply, id 26909, seq 14, length 64
+17:26:49.418141 08:00:27:20:03:f0 > 08:00:27:42:46:f4, ethertype 802.1Q (0x8100), length 102: vlan 100, p 0, ethertype IPv4, (tos 0x0, ttl 64, id 51799, offset 0, flags [DF], proto ICMP (1), length 84)
+
+```
+
+***- А теперь для testClient2, testServer2***
+
+```console
+4: eth1.101@eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
+    link/ether 08:00:27:35:11:37 brd ff:ff:ff:ff:ff:ff
+    inet 10.10.10.1/24 brd 10.10.10.255 scope global noprefixroute eth1.101
+       valid_lft forever preferred_lft forever
+    inet6 fe80::8a1d:2c06:9b35:870/64 scope link noprefixroute 
+       valid_lft forever preferred_lft forever
+[vagrant@testClient2 ~]$ 
+
+[vagrant@testClient2 ~]$ sudo tcpdump -nvvv -e -i eth1 icmp
+tcpdump: listening on eth1, link-type EN10MB (Ethernet), capture size 262144 bytes
+17:32:54.898592 08:00:27:41:55:0a > 08:00:27:35:11:37, ethertype 802.1Q (0x8100), length 102: vlan 101, p 0, ethertype IPv4, (tos 0x0, ttl 64, id 47097, offset 0, flags [DF], proto ICMP (1), length 84)
+    10.10.10.254 > 10.10.10.1: ICMP echo request, id 26890, seq 1, length 64
+17:32:54.898694 08:00:27:35:11:37 > 08:00:27:41:55:0a, ethertype 802.1Q (0x8100), length 102: vlan 101, p 0, ethertype IPv4, (tos 0x0, ttl 64, id 24520, offset 0, flags [none], proto ICMP (1), length 84)
+    10.10.10.1 > 10.10.10.254: ICMP echo reply, id 26890, seq 1, length 64
+17:32:55.900030 08:00:27:41:55:0a > 08:00:27:35:11:37, ethertype 802.1Q (0x8100), length 102: vlan 101, p 0, ethertype IPv4, (tos 0x0, ttl 64, id 47852, offset 0, flags [DF], proto ICMP (1), length 84)
+```
+---
+**Вывод: интерфейсы vlan настроены на хостах в соответствии с заданием, в дампе видно, что пинги приходят с тэгом vlan 100 и 101. Задание выполнено.**
 
